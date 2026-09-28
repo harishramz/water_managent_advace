@@ -35,16 +35,26 @@ Open `http://localhost:5173/`. Vite proxies `/api` to the backend at `http://loc
 
 ## Vercel + public API deployment
 
-The frontend and API must both be deployed. Vercel only hosts the React frontend; the local `localhost:8080` API is not reachable from public browsers. The frontend reads `VITE_API_BASE_URL` at build time.
+The frontend and API must both be deployed. Vercel only hosts the React frontend; the local `localhost:8080` API is not reachable from public browsers. See the Railway example below to create the API and database, then set the Vercel environment variable to its public URL. Vercel reads `VITE_API_BASE_URL` at build time, so changing it requires a redeploy.
 
-1. Deploy `product-api` to a public Java host and attach a production MySQL database. Set `DATABASE_URL`, `DATABASE_USERNAME`, `DATABASE_PASSWORD`, `ADMIN_EMAIL`, and `ADMIN_PASSWORD` in that host's secret/environment settings. Never commit those values.
-2. In the Vercel project, set **Root Directory** to the repository root (the directory containing `vercel.json`). The committed Vercel config builds `java-fullstack-frontend` and rewrites client routes such as `/brands/Bisleri` to `index.html`.
-3. Add the Vercel deployment's exact origin to backend `APP_CORS_ALLOWED_ORIGINS`, for example `https://your-site.vercel.app` (comma-separate additional preview/custom origins). Do not add a trailing path.
-4. In Vercel Project Settings → Environment Variables, set `VITE_API_BASE_URL` to the public HTTPS backend origin, for example `https://your-api-host.example.com` (no `/api` suffix). Apply it to Production and Preview as needed, then redeploy because Vite embeds `VITE_*` variables at build time.
-5. When the frontend and API are on different sites, set backend `SESSION_COOKIE_SAME_SITE=None` and `SESSION_COOKIE_SECURE=true`; HTTPS is required. The API must allow credentialed CORS for the precise Vercel origin. Browsers may restrict third-party cookies; using a custom frontend and API under the same registrable domain is more reliable.
-6. Open the deployed `/`, `/products`, `/brands`, and a direct brand URL. Register/log in, confirm session cookies are accepted, then test cart and checkout. If the account/catalog service is unavailable, check that the Vercel variable exists in the selected environment and that a new deployment was built after adding it.
+In Vercel, keep **Root Directory** at the repository root (the directory containing `vercel.json`). The checked-in Vercel config builds `java-fullstack-frontend` and rewrites client routes such as `/brands/Bisleri` to `index.html`.
 
 The frontend no longer assumes the development-only Vite proxy exists in production. In local development with no `VITE_API_BASE_URL`, relative `/api` paths still use the Vite proxy to `localhost:8080`.
+
+### Create the backend service (Railway example)
+
+The API code is included in this repository but needs a public host and public database before Vercel can call it. The backend has `product-api/Dockerfile`; Railway detects and builds it when the service root directory is `/product-api`. You must be signed into Railway to create the cloud resources; never put provider credentials or database passwords in GitHub.
+
+1. In Railway, create a project and add a MySQL database service. Wait for it to become available.
+2. Add a service from the GitHub repository. Set its root directory to `/product-api`, select the Dockerfile builder, and deploy. In the service's Health Check settings, use `/api/products/brands` as the health-check path.
+3. In the API service's Variables page, add the required database values by referencing Railway's MySQL service variables: `DATABASE_URL` as `jdbc:mysql://${{MySQL.MYSQLHOST}}:${{MySQL.MYSQLPORT}}/${{MySQL.MYSQLDATABASE}}?serverTimezone=UTC`, `DATABASE_USERNAME` as `${{MySQL.MYSQLUSER}}`, and `DATABASE_PASSWORD` as `${{MySQL.MYSQLPASSWORD}}`. If Railway gives the database a different service name than `MySQL`, use that exact name in each reference. Enter database/admin passwords in Railway's secret fields, not in chat or source files.
+4. Also set API service variables: `APP_CORS_ALLOWED_ORIGINS` to the exact Vercel origin (e.g. `https://your-site.vercel.app`), `SESSION_COOKIE_SAME_SITE=None`, `SESSION_COOKIE_SECURE=true`, `ADMIN_EMAIL` to the chosen admin email, and `ADMIN_PASSWORD` to a unique value at least 12 characters long.
+5. In Railway service settings, generate a public domain for the API. The application reads Railway's `PORT` automatically.
+6. Verify `https://<railway-api-domain>/api/products/brands` returns JSON. If it does not, inspect the Railway deploy/build logs and verify the MySQL variable references.
+7. In Vercel Project Settings → Environment Variables, set `VITE_API_BASE_URL` to the API origin only (e.g. `https://<railway-api-domain>`, no `/api` suffix). Apply it to Production, then trigger a new Vercel deployment because Vite embeds this value at build time.
+8. Test `/products`, `/brands`, registration, login, cart, and checkout. Confirm the browser accepts session cookies. Since Vercel and Railway default domains are different sites, some browser privacy settings can block cross-site cookies; a custom API domain under the same registrable domain as the frontend is more reliable.
+
+Never put database/admin secrets in GitHub, Vercel frontend variables, or `VITE_*` variables. `VITE_API_BASE_URL` is public and is only the backend address. Keep schema auto-update for development only; review and migrate the database safely before production use.
 
 ## Customer journey
 

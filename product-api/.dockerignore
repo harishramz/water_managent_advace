@@ -1,0 +1,7 @@
+target
+.git
+.vscode
+.mvn
+mvnw
+mvnw.cmd
+*.log
