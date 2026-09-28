@@ -1,4 +1,8 @@
-const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+const defaultProductionApiUrl = "https://watermanagentadvace-production.up.railway.app";
+const apiBaseUrl = (
+  import.meta.env.VITE_API_BASE_URL ||
+  (import.meta.env.PROD ? defaultProductionApiUrl : "")
+).replace(/\/+$/, "");
 export const API_UNAVAILABLE_CODE = "API_UNAVAILABLE";
 
 export function isApiUnavailable(error) {
