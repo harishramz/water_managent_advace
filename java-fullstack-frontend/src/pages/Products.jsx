@@ -6,8 +6,9 @@ import { api } from "../api";
 function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState("");
+  const [catalogUnavailable, setCatalogUnavailable] = useState(false);
   const [notice, setNotice] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
   const [brands, setBrands] = useState([]);
   const [searchParams] = useSearchParams();
   const [filters, setFilters] = useState(() => ({ search: searchParams.get("search") || "", waterType: searchParams.get("waterType") || "", capacity: searchParams.get("capacity") || "", brand: searchParams.get("brand") || "", minPrice: searchParams.get("minPrice") || "", maxPrice: searchParams.get("maxPrice") || "", available: searchParams.get("available") || "" }));
@@ -20,16 +21,17 @@ function Products() {
       api(`/api/products${query.size ? `?${query}` : ""}`)
         .then((data) => {
         setProducts(data);
-        setError("");
+        setCatalogUnavailable(false);
         setLoading(false);
       })
-      .catch((requestError) => {
-        setError(requestError.message || "Could not load products from server.");
+      .catch(() => {
+        setProducts([]);
+        setCatalogUnavailable(true);
         setLoading(false);
       });
     }, 180);
     return () => clearTimeout(timeout);
-  }, [filters]);
+  }, [filters, reloadKey]);
 
   useEffect(() => {
     api("/api/products/brands").then(setBrands).catch(() => setBrands([]));
@@ -76,7 +78,6 @@ function Products() {
         <div className="brand-pills">{brands.map((brand) => <Link className={`brand-pill${filters.brand === brand.name ? " selected" : ""}`} key={brand.name} to={`/brands/${encodeURIComponent(brand.name)}`}><strong>{brand.name}</strong><span>{brand.productCount} {brand.productCount === 1 ? "item" : "items"}</span></Link>)}</div>
       </section>}
       {notice && <p className="message" role="status">{notice}</p>}
-      {error && <p className="message error" role="alert">{error}</p>}
       {loading ? <p className="subtext">Loading the current catalog…</p> : products.length ? (
         <>
         <p className="result-count">Showing {products.length} {products.length === 1 ? "product" : "products"}</p>
@@ -84,7 +85,12 @@ function Products() {
           {products.map((product) => <ProductCard key={product.id} product={product} onAdd={addToCart} />)}
         </div>
         </>
-      ) : <div className="empty-state">No water products match those filters yet. Check back after the catalog is stocked.</div>}
+      ) : catalogUnavailable ? <section className="catalog-unavailable">
+        <div className="catalog-water-mark" aria-hidden="true">H₂O</div>
+        <div><p className="eyebrow">STORE CATALOG</p><h2>Live water products aren’t connected yet</h2><p className="subtext">Browse popular brands while the store catalog is being connected. Product prices, stock, and ordering will appear here once the store API is online.</p>
+          <div className="button-row"><Link className="button" to="/brands">Browse water brands</Link><button className="button secondary" type="button" onClick={() => { setLoading(true); setReloadKey((key) => key + 1); }}>Retry catalog</button></div>
+        </div>
+      </section> : <div className="empty-state">No water products match those filters yet. Check back after the catalog is stocked.</div>}
       <p className="catalog-disclaimer">Prices and availability are set by this local store. Brand names identify listed products and do not imply brand sponsorship.</p>
     </main>
   );

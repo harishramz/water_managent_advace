@@ -11,8 +11,15 @@ function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const [catalogUnavailable, setCatalogUnavailable] = useState(false);
   useEffect(() => {
-    api(`/api/products/${id}`).then(setProduct).catch((requestError) => setError(requestError.message));
+    api(`/api/products/${id}`).then((item) => {
+      setProduct(item);
+      setCatalogUnavailable(false);
+    }).catch(() => {
+      setProduct(null);
+      setCatalogUnavailable(true);
+    });
   }, [id]);
 
   const add = async () => {
@@ -41,7 +48,10 @@ function ProductDetails() {
           <button className="button" onClick={add} disabled={!product.stockQuantity || quantity < 1 || quantity > product.stockQuantity}>Add to cart</button>
         </div>
       </section>
-    </div> : !error && <p className="subtext">Loading product…</p>}
+    </div> : catalogUnavailable ? <section className="catalog-unavailable" style={{ marginTop: 22 }}>
+      <div className="catalog-water-mark" aria-hidden="true">H₂O</div>
+      <div><p className="eyebrow">PRODUCT DETAILS</p><h2>Live product details aren’t available yet</h2><p className="subtext">This product page needs the store catalog connection for current price, stock, and ordering.</p><Link className="button" to="/brands">Browse water brands</Link></div>
+    </section> : !error && <p className="subtext">Loading product…</p>}
   </main>;
 }
 export default ProductDetails;
