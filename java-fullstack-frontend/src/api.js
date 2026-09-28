@@ -1,6 +1,13 @@
+const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || "").replace(/\/+$/, "");
+
 export async function api(path, options = {}) {
-  const response = await fetch(path, {
-    credentials: "same-origin",
+  if (import.meta.env.PROD && !apiBaseUrl) {
+    throw new Error("The API server is not configured. Set VITE_API_BASE_URL in the Vercel project settings and redeploy.");
+  }
+
+  const url = /^https?:\/\//i.test(path) ? path : `${apiBaseUrl}${path}`;
+  const response = await fetch(url, {
+    credentials: "include",
     ...options,
     headers: {
       ...(options.body ? { "Content-Type": "application/json" } : {}),
