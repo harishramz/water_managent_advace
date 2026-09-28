@@ -1,0 +1,11 @@
+{
+  "installCommand": "npm ci --prefix java-fullstack-frontend",
+  "buildCommand": "npm --prefix java-fullstack-frontend run build",
+  "outputDirectory": "java-fullstack-frontend/dist",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
