@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { api } from "./api";
+import { BrowserRouter, Link, Navigate, Route, Routes, useLocation } from "react-router-dom";
+import { api, isApiUnavailable } from "./api";
 import Navbar from "./components/Navbar";
 import Home from "./pages/Home";
 import Products from "./pages/Products";
@@ -21,13 +21,30 @@ import BrandPage from "./pages/BrandPage";
 function Protected({ role, children }) {
   const [user, setUser] = useState(null);
   const [loaded, setLoaded] = useState(false);
+  const [serviceUnavailable, setServiceUnavailable] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
-    api("/api/auth/me").then(setUser).catch(() => setUser(null)).finally(() => setLoaded(true));
+    api("/api/auth/me").then((currentUser) => {
+      setUser(currentUser);
+      setServiceUnavailable(false);
+    }).catch((error) => {
+      if (isApiUnavailable(error) || error.status !== 401) {
+        setServiceUnavailable(true);
+        return;
+      }
+      setUser(null);
+    }).finally(() => setLoaded(true));
   }, []);
 
   if (!loaded) return <main className="page"><p className="subtext">Checking your account…</p></main>;
+  if (serviceUnavailable) return <main className="page"><section className="catalog-unavailable">
+    <div className="catalog-water-mark" aria-hidden="true">H₂O</div>
+    <div><p className="eyebrow">ACCOUNT & CHECKOUT</p><h2>Shopping services aren’t available right now</h2>
+      <p className="subtext">Your cart, account, and checkout need the store service to be connected. You can still browse the water catalog and brands.</p>
+      <div className="button-row"><Link className="button" to="/products">Browse water</Link><Link className="button secondary" to="/brands">Browse brands</Link></div>
+    </div>
+  </section></main>;
   if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   if (role && user.role !== role) return <Navigate to={user.role === "ADMIN" ? "/admin" : user.role === "DELIVERY" ? "/deliveries" : "/dashboard"} replace />;
   return children;

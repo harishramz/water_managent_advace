@@ -42,7 +42,7 @@ The frontend and API must both be deployed. Vercel only hosts the React frontend
 3. Add the Vercel deployment's exact origin to backend `APP_CORS_ALLOWED_ORIGINS`, for example `https://your-site.vercel.app` (comma-separate additional preview/custom origins). Do not add a trailing path.
 4. In Vercel Project Settings → Environment Variables, set `VITE_API_BASE_URL` to the public HTTPS backend origin, for example `https://your-api-host.example.com` (no `/api` suffix). Apply it to Production and Preview as needed, then redeploy because Vite embeds `VITE_*` variables at build time.
 5. When the frontend and API are on different sites, set backend `SESSION_COOKIE_SAME_SITE=None` and `SESSION_COOKIE_SECURE=true`; HTTPS is required. The API must allow credentialed CORS for the precise Vercel origin. Browsers may restrict third-party cookies; using a custom frontend and API under the same registrable domain is more reliable.
-6. Open the deployed `/`, `/products`, `/brands`, and a direct brand URL. Register/log in, confirm session cookies are accepted, then test cart and checkout. If the frontend reports “API server is not configured,” the Vercel variable was missing from that deployment or it was not rebuilt.
+6. Open the deployed `/`, `/products`, `/brands`, and a direct brand URL. Register/log in, confirm session cookies are accepted, then test cart and checkout. If the account/catalog service is unavailable, check that the Vercel variable exists in the selected environment and that a new deployment was built after adding it.
 
 The frontend no longer assumes the development-only Vite proxy exists in production. In local development with no `VITE_API_BASE_URL`, relative `/api` paths still use the Vite proxy to `localhost:8080`.
 

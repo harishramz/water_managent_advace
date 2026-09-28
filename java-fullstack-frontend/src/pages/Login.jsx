@@ -27,7 +27,7 @@ function Login() {
       navigate(data.role === "ADMIN" ? "/admin" : data.role === "DELIVERY" ? "/deliveries" : location.state?.from || "/dashboard", { replace: true });
     } catch (error) {
       setIsError(true);
-      setMessage(error.message || "Could not reach the server.");
+      setMessage(error.message || "Sign-in could not be completed. Please try again.");
     } finally {
       setBusy(false);
     }
@@ -47,7 +47,7 @@ function Login() {
       setIsRegister(false);
     } catch (error) {
       setIsError(true);
-      setMessage(error.message || "Could not reach the server.");
+      setMessage(error.message || "Account creation could not be completed. Please try again.");
     } finally {
       setBusy(false);
     }
